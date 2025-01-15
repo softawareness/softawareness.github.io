@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tip Split Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+    </style>
+    <script>
+        function addGroup() {
+            const groupContainer = document.getElementById("group-container");
+            const groupDiv = document.createElement("div");
+            groupDiv.className = "group";
+            groupDiv.innerHTML = `
+                <label>Group Subtotal: $<input type="number" step="0.01" class="subtotal" value="0"></label>
+                <button type="button" onclick="removeGroup(this)">Remove</button>
+            `;
+            groupContainer.appendChild(groupDiv);
+        }
+
+        function removeGroup(button) {
+            const group = button.parentElement;
+            group.remove();
+        }
+
+        function calculate() {
+            const subtotals = Array.from(document.getElementsByClassName("subtotal"));
+            const totalTax = parseFloat(document.getElementById("total-tax").value) || 0;
+            const totalTip = parseFloat(document.getElementById("total-tip").value) || 0;
+
+            const groupResults = document.getElementById("results");
+            groupResults.innerHTML = ""; // Clear previous results
+
+            let totalBill = 0;
+            let totalTaxShare = 0;
+            let totalTipShare = 0;
+            let totalOverall = 0;
+
+            const groupData = subtotals.map(input => parseFloat(input.value) || 0);
+
+            totalBill = groupData.reduce((sum, val) => sum + val, 0);
+
+            if (totalBill === 0) {
+                alert("Please ensure subtotals add up to a valid amount.");
+                return;
+            }
+
+            const table = document.createElement("table");
+            const headerRow = document.createElement("tr");
+            headerRow.innerHTML = `
+                <th>Group</th>
+                <th>Subtotal ($)</th>
+                <th>Tax ($)</th>
+                <th>Tip ($)</th>
+                <th>Total ($)</th>
+            `;
+            table.appendChild(headerRow);
+
+            groupData.forEach((subtotal, index) => {
+                const taxShare = (subtotal / totalBill) * totalTax;
+                const tipShare = (subtotal / totalBill) * totalTip;
+                const totalShare = subtotal + taxShare + tipShare;
+
+                totalTaxShare += taxShare;
+                totalTipShare += tipShare;
+                totalOverall += totalShare;
+
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>Group ${index + 1}</td>
+                    <td>${subtotal.toFixed(2)}</td>
+                    <td>${taxShare.toFixed(2)}</td>
+                    <td>${tipShare.toFixed(2)}</td>
+                    <td><strong>${totalShare.toFixed(2)}</strong></td>
+                `;
+                table.appendChild(row);
+            });
+
+            const totalRow = document.createElement("tr");
+            totalRow.innerHTML = `
+                <td><strong>Total</strong></td>
+                <td><strong>${totalBill.toFixed(2)}</strong></td>
+                <td><strong>${totalTaxShare.toFixed(2)}</strong></td>
+                <td><strong>${totalTipShare.toFixed(2)}</strong></td>
+                <td><strong>${totalOverall.toFixed(2)}</strong></td>
+            `;
+            table.appendChild(totalRow);
+
+            groupResults.appendChild(table);
+        }
+    </script>
+</head>
+<body>
+    <h1>Tip Split Calculator</h1>
+    <div class="input-group">
+        <label>Total Tax Paid: $<input type="number" step="0.01" id="total-tax" value="0"></label>
+        <label>Total Tip Paid: $<input type="number" step="0.01" id="total-tip" value="0"></label>
+    </div>
+    <div id="group-container"></div>
+    <button type="button" onclick="addGroup()">Add Group</button>
+    <button type="button" onclick="calculate()">Calculate</button>
+    <div class="results" id="results"></div>
+</body>
+</html>
