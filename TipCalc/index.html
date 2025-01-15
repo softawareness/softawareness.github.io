@@ -40,7 +40,7 @@
             const groupDiv = document.createElement("div");
             groupDiv.className = "group";
             groupDiv.innerHTML = `
-                <label>Group Subtotal: $<input type="number" step="0.01" class="subtotal" value="0"></label>
+                <label>Group Subtotal: $<input inputmode="numeric" pattern="[0-9]*" type="number" step="0.01" class="subtotal" value="0"></label>
                 <button type="button" onclick="removeGroup(this)">Remove</button>
             `;
             groupContainer.appendChild(groupDiv);
@@ -121,8 +121,8 @@
 <body>
     <h1>Tip Split Calculator</h1>
     <div class="input-group">
-        <label>Total Tax Paid: $<input type="number" step="0.01" id="total-tax" value="0"></label>
-        <label>Total Tip Paid: $<input type="number" step="0.01" id="total-tip" value="0"></label>
+        <label>Total Tax Paid: $<input inputmode="numeric" pattern="[0-9]*" type="number" step="0.01" id="total-tax" value="0"></label>
+        <label>Total Tip Paid: $<input inputmode="numeric" pattern="[0-9]*" type="number" step="0.01" id="total-tip" value="0"></label>
     </div>
     <div id="group-container"></div>
     <button type="button" onclick="addGroup()">Add Group</button>
