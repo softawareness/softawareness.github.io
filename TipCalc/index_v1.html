@@ -16,26 +16,19 @@
             gap: 10px;
             margin-bottom: 10px;
         }
-        input[type="number"] {
-            font-size: 16px;
+        input[type="number"]
+        {
+            font-size:16px;
         }
-        button[type="button"] {
-            font-size: 16px;
+        button[type="button"]
+        {
+            font-size:16px;
         }
         .group {
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             gap: 10px;
             margin-bottom: 10px;
-        }
-        .itemize-section {
-            display: none;
-            flex-direction: column;
-            gap: 5px;
-        }
-        .item-row {
-            display: flex;
-            gap: 5px;
         }
         table {
             width: 100%;
@@ -56,66 +49,23 @@
             const groupDiv = document.createElement("div");
             groupDiv.className = "group";
             groupDiv.innerHTML = `
-                <div>
-                    <label>Group Subtotal: $<input type="number" inputmode="decimal" pattern="[0-9.]*" step="0.01" class="subtotal" value="0"></label>
-                    <button type="button" onclick="removeGroup(this)">Remove</button>
-                    <button type="button" onclick="toggleItemize(this)">Itemize</button>
-                    <div class="itemize-section">
-                        <div class="item-rows"></div>
-                        <button type="button" onclick="addItemRow(this)">Add Item</button>
-                    </div>
-                </div>
+                <label>Group Subtotal: $<input type="number" inputmode="decimal" pattern="[0-9.]*" step="0.01" class="subtotal" value="0"></label>
+                <button type="button" onclick="removeGroup(this)">Remove</button>
             `;
             groupContainer.appendChild(groupDiv);
 
+            // Add event listener to the new input
             const subtotalInput = groupDiv.querySelector(".subtotal");
             subtotalInput.addEventListener("focus", highlightInput);
         }
 
         function removeGroup(button) {
-            const group = button.closest(".group");
+            const group = button.parentElement;
             group.remove();
         }
 
         function highlightInput(event) {
             event.target.select();
-        }
-
-        function toggleItemize(button) {
-            const itemSection = button.parentElement.querySelector(".itemize-section");
-            itemSection.style.display = itemSection.style.display === "flex" ? "none" : "flex";
-        }
-
-        function addItemRow(button) {
-            const itemSection = button.parentElement;
-            const itemRows = itemSection.querySelector(".item-rows");
-            const row = document.createElement("div");
-            row.className = "item-row";
-            row.innerHTML = `
-                <input type="number" step="0.01" placeholder="Item Price" oninput="updateSubtotal(this)">
-                <button type="button" onclick="removeItemRow(this)">X</button>
-            `;
-            itemRows.appendChild(row);
-            updateSubtotal(row.querySelector("input"));
-        }
-
-        function removeItemRow(button) {
-            const row = button.parentElement;
-            const input = row.querySelector("input");
-            const groupDiv = row.closest(".group");
-            row.remove();
-            updateSubtotal(input, groupDiv);
-        }
-
-        function updateSubtotal(input, specificGroup = null) {
-            const group = specificGroup || input.closest(".group");
-            const itemInputs = group.querySelectorAll(".itemize-section input[type='number']");
-            let total = 0;
-            itemInputs.forEach(input => {
-                total += parseFloat(input.value) || 0;
-            });
-            const subtotalBox = group.querySelector(".subtotal");
-            subtotalBox.value = total.toFixed(2);
         }
 
         function calculate() {
@@ -124,7 +74,7 @@
             const totalTip = parseFloat(document.getElementById("total-tip").value) || 0;
 
             const groupResults = document.getElementById("results");
-            groupResults.innerHTML = "";
+            groupResults.innerHTML = ""; // Clear previous results
 
             let totalBill = 0;
             let totalTaxShare = 0;
@@ -132,6 +82,7 @@
             let totalOverall = 0;
 
             const groupData = subtotals.map(input => parseFloat(input.value) || 0);
+
             totalBill = groupData.reduce((sum, val) => sum + val, 0);
 
             if (totalBill === 0) {
@@ -187,6 +138,7 @@
             document.getElementById("total-tax").addEventListener("focus", highlightInput);
             document.getElementById("total-tip").addEventListener("focus", highlightInput);
 
+            // Attach event listeners to any existing subtotals
             const existingSubtotals = document.getElementsByClassName("subtotal");
             Array.from(existingSubtotals).forEach(input => {
                 input.addEventListener("focus", highlightInput);
