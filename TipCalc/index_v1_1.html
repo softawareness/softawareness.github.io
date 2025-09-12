@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tip Split Calculator</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 16px;
+            margin: 20px;
+        }
+        .input-group, .group {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        input[type="number"], button[type="button"] {
+            font-size: 1em;
+            padding: 0.5em;
+            min-width: 80px;
+        }
+        .itemize-section {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+        }
+        .item-row {
+            display: flex;
+            gap: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            overflow-x: auto;
+            display: block;
+        }
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+        th, td {
+            padding: 10px;
+            text-align: center;
+        }
+        @media (max-width: 600px) {
+            body {
+                margin: 5vw;
+                font-size: 4vw;
+            }
+            .input-group, .group {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            input[type="number"], button[type="button"] {
+                width: 100%;
+                min-width: unset;
+            }
+            table, th, td {
+                font-size: 3.5vw;
+            }
+        }
+    </style>
+    <script>
+        function addGroup() {
+            const groupContainer = document.getElementById("group-container");
+            const groupDiv = document.createElement("div");
+            groupDiv.className = "group";
+            groupDiv.innerHTML = `
+                <div>
+                    <label>Group Subtotal: $<input type="number" inputmode="decimal" pattern="[0-9.]*" step="0.01" class="subtotal" value="0"></label>
+                    <button type="button" onclick="removeGroup(this)">Remove</button>
+                    <button type="button" onclick="toggleItemize(this)">Itemize</button>
+                    <div class="itemize-section">
+                        <div class="item-rows"></div>
+                        <button type="button" onclick="addItemRow(this)">Add Item</button>
+                    </div>
+                </div>
+            `;
+            groupContainer.appendChild(groupDiv);
+
+            const subtotalInput = groupDiv.querySelector(".subtotal");
+            subtotalInput.addEventListener("focus", highlightInput);
+        }
+
+        function removeGroup(button) {
+            const group = button.closest(".group");
+            group.remove();
+        }
+
+        function highlightInput(event) {
+            event.target.select();
+        }
+
+        function toggleItemize(button) {
+            const itemSection = button.parentElement.querySelector(".itemize-section");
+            itemSection.style.display = itemSection.style.display === "flex" ? "none" : "flex";
+        }
+
+        function addItemRow(button) {
+            const itemSection = button.parentElement;
+            const itemRows = itemSection.querySelector(".item-rows");
+            const row = document.createElement("div");
+            row.className = "item-row";
+            row.innerHTML = `
+                <input type="number" inputmode="decimal" pattern="[0-9.]*" step="0.01" placeholder="Item Price" oninput="updateSubtotal(this)">
+                <button type="button" onclick="removeItemRow(this)">X</button>
+            `;
+            itemRows.appendChild(row);
+            updateSubtotal(row.querySelector("input"));
+        }
+
+        function removeItemRow(button) {
+            const row = button.parentElement;
+            const input = row.querySelector("input");
+            const groupDiv = row.closest(".group");
+            row.remove();
+            updateSubtotal(input, groupDiv);
+        }
+
+        function updateSubtotal(input, specificGroup = null) {
+            const group = specificGroup || input.closest(".group");
+            const itemInputs = group.querySelectorAll(".itemize-section input[type='number']");
+            let total = 0;
+            itemInputs.forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+            const subtotalBox = group.querySelector(".subtotal");
+            subtotalBox.value = total.toFixed(2);
+        }
+
+        function calculate() {
+            const subtotals = Array.from(document.getElementsByClassName("subtotal"));
+            const totalTax = parseFloat(document.getElementById("total-tax").value) || 0;
+            const totalTip = parseFloat(document.getElementById("total-tip").value) || 0;
+
+            const groupResults = document.getElementById("results");
+            groupResults.innerHTML = "";
+
+            let totalBill = 0;
+            let totalTaxShare = 0;
+            let totalTipShare = 0;
+            let totalOverall = 0;
+
+            const groupData = subtotals.map(input => parseFloat(input.value) || 0);
+            totalBill = groupData.reduce((sum, val) => sum + val, 0);
+
+            if (totalBill === 0) {
+                alert("Please ensure subtotals add up to a valid amount.");
+                return;
+            }
+
+            const table = document.createElement("table");
+            const headerRow = document.createElement("tr");
+            headerRow.innerHTML = `
+                <th>Group</th>
+                <th>Subtotal ($)</th>
+                <th>Tax ($)</th>
+                <th>Tip ($)</th>
+                <th>Total ($)</th>
+            `;
+            table.appendChild(headerRow);
+
+            groupData.forEach((subtotal, index) => {
+                const taxShare = (subtotal / totalBill) * totalTax;
+                const tipShare = (subtotal / totalBill) * totalTip;
+                const totalShare = subtotal + taxShare + tipShare;
+
+                totalTaxShare += taxShare;
+                totalTipShare += tipShare;
+                totalOverall += totalShare;
+
+                const row = document.createElement("tr");
+                row.innerHTML = `
+                    <td>Group ${index + 1}</td>
+                    <td>${subtotal.toFixed(2)}</td>
+                    <td>${taxShare.toFixed(2)}</td>
+                    <td>${tipShare.toFixed(2)}</td>
+                    <td><strong>${totalShare.toFixed(2)}</strong></td>
+                `;
+                table.appendChild(row);
+            });
+
+            const totalRow = document.createElement("tr");
+            totalRow.innerHTML = `
+                <td><strong>Total</strong></td>
+                <td><strong>${totalBill.toFixed(2)}</strong></td>
+                <td><strong>${totalTaxShare.toFixed(2)}</strong></td>
+                <td><strong>${totalTipShare.toFixed(2)}</strong></td>
+                <td><strong>${totalOverall.toFixed(2)}</strong></td>
+            `;
+            table.appendChild(totalRow);
+
+            groupResults.appendChild(table);
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            document.getElementById("total-tax").addEventListener("focus", highlightInput);
+            document.getElementById("total-tip").addEventListener("focus", highlightInput);
+
+            const existingSubtotals = document.getElementsByClassName("subtotal");
+            Array.from(existingSubtotals).forEach(input => {
+                input.addEventListener("focus", highlightInput);
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Tip Split Calculator</h1>
+    <div class="input-group">
+        <label>Total Tax Paid: $<input type="number" inputmode="decimal" pattern="[0-9.]*" step="0.01" id="total-tax" value="0"></label>
+        <label>Total Tip Paid: $<input type="number" inputmode="decimal" pattern="[0-9.]*" step="0.01" id="total-tip" value="0"></label>
+    </div>
+    <div id="group-container"></div>
+    <button type="button" onclick="addGroup()">Add Group</button>
+    <button type="button" onclick="calculate()">Calculate</button>
+    <div class="results" id="results"></div>
+</body>
+</html>
