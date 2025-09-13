@@ -98,7 +98,16 @@
 
         function toggleItemize(button) {
             const itemSection = button.parentElement.querySelector(".itemize-section");
-            itemSection.style.display = itemSection.style.display === "flex" ? "none" : "flex";
+            if (itemSection.style.display !== "flex") {
+                itemSection.style.display = "flex";
+                const itemRows = itemSection.querySelector(".item-rows");
+                // Add one item row if none exist
+                if (itemRows.children.length === 0) {
+                    addItemRow(itemSection.querySelector("button[onclick^='addItemRow']"));
+                }
+            } else {
+                itemSection.style.display = "none";
+            }
         }
 
         function addItemRow(button) {
