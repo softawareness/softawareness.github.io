@@ -116,11 +116,45 @@
             const row = document.createElement("div");
             row.className = "item-row mb-2";
             row.innerHTML = `
-                <input type="number" inputmode="decimal" pattern="[0-9.]*" step="0.01" placeholder="Item Price" oninput="updateSubtotal(this)" class="form-control d-inline-block w-auto">
+                <input type="number" inputmode="decimal" pattern="[0-9.]*" step="0.01" placeholder="Item Price" oninput="updateSubtotal(this)" class="form-control d-inline-block w-auto price-input">
+                <input type="text" placeholder="e.g. 5+2*3" oninput="evaluateAndSetPrice(this)" class="form-control d-inline-block w-auto ms-2 expr-input" aria-label="math expression for item">
                 <button type="button" onclick="removeItemRow(this)" class="btn btn-outline-danger btn-sm ms-2">X</button>
             `;
             itemRows.appendChild(row);
-            updateSubtotal(row.querySelector("input"));
+            // Initialize subtotal (price input is first input in the row)
+            updateSubtotal(row.querySelector("input[type='number']"));
+        }
+
+        // Evaluate a simple math expression from the expression textbox and set the price input
+        function evaluateAndSetPrice(exprInput) {
+            if (!exprInput) return;
+            const raw = exprInput.value.replace(/×/g, '*').replace(/÷/g, '/').trim();
+            const priceInput = exprInput.closest('.item-row').querySelector("input[type='number']");
+
+            if (raw === "") {
+                // If expression cleared, clear price
+                priceInput.value = "";
+                updateSubtotal(priceInput);
+                return;
+            }
+
+            // Allow only digits, operators, parentheses, decimal point and whitespace
+            const allowed = /^[0-9+\-*/().\s]+$/;
+            if (!allowed.test(raw)) {
+                // Not a valid simple math expression; do not change price
+                return;
+            }
+
+            try {
+                // Use Function to evaluate safely after validation
+                const result = Function('"use strict"; return (' + raw + ')')();
+                if (typeof result === 'number' && isFinite(result)) {
+                    priceInput.value = Number(Math.round(result * 100) / 100).toFixed(2);
+                    updateSubtotal(priceInput);
+                }
+            } catch (e) {
+                // incomplete/invalid math while typing — ignore silently
+            }
         }
 
         function removeItemRow(button) {
